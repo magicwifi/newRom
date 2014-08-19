@@ -19,10 +19,12 @@ wifidog_SOURCES = commandline.c \
 	centralserver.c \
 	http.c \
 	auth.c \
+	authlog.c \
 	client_list.c \
 	util.c \
 	wdctl_thread.c \
 	ping_thread.c \
+	ding_thread.c \
 	retrieve_thread.c \
 	safe.c \
 	httpd_thread.c
@@ -37,11 +39,13 @@ noinst_HEADERS = commandline.h \
 	centralserver.h \
 	http.h \
 	auth.h \
+	authlog.h \
 	client_list.h \
 	util.h \
 	wdctl_thread.h \
 	wdctl.h \
 	ping_thread.h \
+	ding_thread.h \
 	safe.h \
 	retrieve_thread.h \
 	httpd_thread.h

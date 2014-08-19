@@ -140,6 +140,7 @@ typedef struct {
     char *gw_id;		/**< @brief ID of the Gateway, sent to central
 				     server */
     char *dev_id;
+    char *gw_mac;	
     char *gw_interface;		/**< @brief Interface we will accept connections on */
     char *gw_address;		/**< @brief Internal IP address for our web
 				     server */

@@ -48,48 +48,38 @@
 #include "common.h"
 #include "conf.h"
 #include "debug.h"
-#include "ping_thread.h"
+#include "ding_thread.h"
 #include "util.h"
 #include "centralserver.h"
+#include "retrieve_thread.h"
 #include "fetchconf.h"
 
-static void ping(void);
+static void ding(void);
 
 
 
-extern int level;
-extern time_t started_time;
 
 /** Launches a thread that periodically checks in with the wifidog auth server to perform heartbeat function.
 @param arg NULL
 @todo This thread loops infinitely, need a watchdog to verify that it is still running?
 */  
 void
-thread_ping(void *arg)
+thread_ding(void *arg)
 {
 	pthread_cond_t		cond = PTHREAD_COND_INITIALIZER;
 	pthread_mutex_t		cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 	struct	timespec	timeout;
 
-	/*
-	timeout.tv_sec = time(NULL) + 30;
-	timeout.tv_nsec = 0;
 
-	pthread_mutex_lock(&cond_mutex);
-
-	pthread_cond_timedwait(&cond, &cond_mutex, &timeout);
-
-	pthread_mutex_unlock(&cond_mutex);
-	*/
-
+	
 	while (1) {
 		/* Make sure we check the servers at the very begining */
-		debug(LOG_DEBUG, "Running ping()");
-		ping();
+		debug(LOG_DEBUG, "Running ding()");
+		ding();
 		
 		
 		/* Sleep for config.checkinterval seconds... */
-		timeout.tv_sec = time(NULL) + config_get_config()->checkinterval;
+		timeout.tv_sec = time(NULL) + 30;
 		timeout.tv_nsec = 0;
 
 		/* Mutex must be locked for pthread_cond_timedwait... */
@@ -107,7 +97,7 @@ thread_ping(void *arg)
  * This function does the actual request.
  */
 static void
-ping(void)
+ding(void)
 {
         ssize_t			numbytes;
         size_t	        	totalbytes;
@@ -119,26 +109,24 @@ ping(void)
 	unsigned long int sys_uptime  = 0;
 	unsigned int      sys_memfree = 0;
 	float             sys_load    = 0;
-	t_serv	*auth_server = NULL;
-	auth_server = get_auth_server();
 	    char            *str = NULL;
          char            *str1 = NULL;
-	s_config *config=config_get_config();
 	
 	
 	
-	debug(LOG_DEBUG, "Entering ping()");
+	debug(LOG_DEBUG, "Entering ding()");
 	
 	/*
 	 * The ping thread does not really try to see if the auth server is actually
 	 * working. Merely that there is a web server listening at the port. And that
 	 * is done by connect_auth_server() internally.
 	 */
-	sockfd = connect_auth_server();
+	sockfd = connect_log_server();
 	if (sockfd == -1) {
 		/*
 		 * No auth servers for me to talk to
 		 */
+	debug(LOG_DEBUG, "Entering ding() connect fail");
 		return;
 	}
 
@@ -175,26 +163,18 @@ ping(void)
 	/*
 	 * Prep & send request
 	 */
-snprintf(request, sizeof(request) - 1,
-			"GET %s%sgw_id=%s&dev_id=%s&wan_ip=%s&wan_proto=%s&sys_uptime=%lu&sys_memfree=%u&sys_load=%.2f&twifi_uptime=%lu&ssid=%s HTTP/1.0\r\n"
+	snprintf(request, sizeof(request) - 1,
+			"GET %s?gw_id=%s&sys_uptime=%lu&sys_memfree=%u&sys_load=%.2f HTTP/1.0\r\n"
 			"User-Agent: WiFiDog %s\r\n"
 			"Host: %s\r\n"
 			"\r\n",
-			auth_server->serv_path,
-			auth_server->serv_ping_script_path_fragment,
-			config_get_config()->gw_id,
-			config_get_config()->dev_id,
-			"192.168.10.1",
-			"static",
+			"http://124.127.116.177/ding",
+			config_get_config()->gw_mac,
 			sys_uptime,
 			sys_memfree,
 			sys_load,
-			(long unsigned int)((long unsigned int)time(NULL) - (long unsigned int)started_time),
-			"iWIFI-INTER-TEST",
 			VERSION,
-			auth_server->serv_hostname);
-
-
+			"124.127.116.177");
 
 	debug(LOG_DEBUG, "HTTP Request to Server: [%s]", request);
 	
@@ -258,19 +238,7 @@ snprintf(request, sizeof(request) - 1,
 		/* FIXME */
 	}
 	else {
-			/*
-	 		if(strstr(request, "cmdflag")){
-				retrieve(auth_server);
-				debug(LOG_DEBUG, "Auth Server Says OK" );
-
-			}
-			else if (strstr(request, "configflag")){
-					level=0;
-			}						
-
-		debug(LOG_DEBUG, "Auth Server Says: Pong:%d %d %d %d", config_get_config()->checkinterval,config_get_config()->authinterval,config_get_config()->httpdmaxconn,config_get_config()->clienttimeout);
-		*/
-	debug(LOG_DEBUG, "Auth Server Says: Pong");
+		debug(LOG_DEBUG, "Auth Server Says: Pong");
 	}
 	
 	

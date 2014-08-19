@@ -53,10 +53,12 @@
 #include "firewall.h"
 #include "commandline.h"
 #include "auth.h"
+#include "authlog.h"
 #include "http.h"
 #include "client_list.h"
 #include "wdctl_thread.h"
 #include "ping_thread.h"
+#include "ding_thread.h"
 #include "httpd_thread.h"
 #include "util.h"
 
@@ -66,6 +68,8 @@
  */
 static pthread_t tid_fw_counter = 0;
 static pthread_t tid_ping = 0; 
+static pthread_t tid_ding = 0; 
+static pthread_t tid_authlog = 0; 
 /* The internal web server */
 httpd * webserver = NULL;
 
@@ -296,7 +300,18 @@ termination_handler(int s)
 		debug(LOG_INFO, "Explicitly killing the ping thread");
 		pthread_kill(tid_ping, SIGKILL);
 	}
+	
+	
+	if (tid_ding) {
+		debug(LOG_INFO, "Explicitly killing the ding thread");
+		pthread_kill(tid_ding, SIGKILL);
+	}
+	
 
+	if (tid_authlog) {
+		debug(LOG_INFO, "Explicitly killing the fetchconf thread");
+		pthread_kill(tid_authlog, SIGKILL);
+	}
 
 
 	debug(LOG_NOTICE, "Exiting...");
@@ -390,13 +405,13 @@ main_loop(void)
 
 	/* If we don't have the Gateway ID, construct it from the internal MAC address.
 	 * "Can't fail" so exit() if the impossible happens. */
-	if (!config->gw_id) {
+	if (!config->gw_mac) {
     	debug(LOG_DEBUG, "Finding MAC address of %s", config->gw_interface);
-    	if ((config->gw_id = get_iface_mac(config->gw_interface)) == NULL) {
+    	if ((config->gw_mac = get_iface_mac(config->gw_interface)) == NULL) {
 			debug(LOG_ERR, "Could not get MAC address information of %s, exiting...", config->gw_interface);
 			exit(1);
 		}
-		debug(LOG_DEBUG, "%s = %s", config->gw_interface, config->gw_id);
+		debug(LOG_DEBUG, "%s = %s", config->gw_interface, config->gw_mac);
 	}
 
 	/* Initializes the web server */
@@ -446,6 +461,20 @@ main_loop(void)
 	}
 	pthread_detach(tid_ping);
 	
+		
+	result = pthread_create(&tid_ding, NULL, (void *)thread_ding, NULL);
+	if (result != 0) {
+	    debug(LOG_ERR, "FATAL: Failed to create a new thread (ding) - exiting");
+		termination_handler(0);
+	}
+	pthread_detach(tid_ding);
+	
+	result = pthread_create(&tid_authlog, NULL, (void *)thread_client_timeout_log, NULL);
+	if (result != 0) {
+	    debug(LOG_ERR, "FATAL: Failed to create a new thread authlog - exiting");
+	    termination_handler(0);
+	}
+	pthread_detach(tid_authlog);
 	
 	
 	debug(LOG_NOTICE, "Waiting for connections");

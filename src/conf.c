@@ -176,6 +176,7 @@ config_init(void)
 	config.external_interface = NULL;
 	config.gw_id = safe_strdup(DEFAULT_GATEWAYID);
 	config.dev_id = safe_strdup(DEFAULT_DEV);
+	config.gw_mac = NULL;
 	config.gw_interface = NULL;
 	config.gw_address = NULL;
 	config.gw_port = DEFAULT_GATEWAYPORT;

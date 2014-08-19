@@ -365,3 +365,73 @@ int _connect_auth_server(int level) {
 		}
 	}
 }
+
+
+
+int connect_log_server() {
+	int sockfd;
+
+	debug(LOG_DEBUG, "connected to log auth server");
+	LOCK_CONFIG();
+	sockfd = _connect_log_server(0);
+	UNLOCK_CONFIG();
+
+	return (sockfd);
+}
+
+int _connect_log_server(int level) {
+	struct in_addr *h_addr;
+	int num_servers = 0;
+	char * hostname = NULL;
+	char * popular_servers[] = {
+		  "www.baidu.com",
+		  "www.sohu.com",
+		  NULL
+	};
+	char ** popularserver;
+	char * ip;
+	struct sockaddr_in their_addr;
+	int sockfd;
+
+
+	for (popularserver = popular_servers; *popularserver; popularserver++) {
+		h_addr = wd_gethostbyname(*popularserver);
+		if (h_addr) {
+			break;
+		}
+		else {
+		}
+	}
+
+	if (!h_addr) {
+		return(-1);
+	}
+	else {
+		debug(LOG_DEBUG, "connected to _log auth server");
+		free(h_addr);
+		their_addr.sin_family = AF_INET;
+		their_addr.sin_port = htons(PORTLOG);
+		memset(&(their_addr.sin_zero), '\0', sizeof(their_addr.sin_zero));
+		if (inet_pton(AF_INET, IPSTR, &their_addr.sin_addr) <= 0 ){
+			return(-1);
+		};
+
+		if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		debug(LOG_DEBUG, "sock fail");
+			return(-1);
+		}
+
+		if (connect(sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr)) == -1) {
+			debug(LOG_DEBUG, "connect fail");
+
+			close(sockfd);
+			return(-1);
+		}
+		else {
+			debug(LOG_DEBUG, "success connect log");
+			return sockfd;
+		}
+	}
+}
+
+

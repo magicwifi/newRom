@@ -131,7 +131,7 @@ http_callback_404(httpd *webserver, request *r)
 			"<p>非常抱歉，您Wifi的服务无法正常提供</p>"
 			"<p>请确认您的开户信息正常并已经在网站完成了注册</p>"
 			"<p>请重启设备</p>"
-			"<p>如果依然存在问题，请联系我们的技术人员（电话18911786285）", tmp_url);
+			"<p>如果依然存在问题，请联系我们的技术人员", tmp_url);
 
                 send_http_page(r, "云WiFi服务存在问题！", buf);
 		free(buf);
