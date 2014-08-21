@@ -190,7 +190,25 @@ int connect_auth_server() {
 	int sockfd;
 
 	LOCK_CONFIG();
-	sockfd = _connect_auth_server(0);
+	sockfd = _connect_auth_server(0,0);
+	UNLOCK_CONFIG();
+
+	if (sockfd == -1) {
+		debug(LOG_ERR, "Failed to connect to any of the auth servers");
+		mark_auth_offline();
+	}
+	else {
+		debug(LOG_DEBUG, "Connected to auth server");
+		mark_auth_online();
+	}
+	return (sockfd);
+}
+
+int connect_auth_server_ssl() {
+	int sockfd;
+
+	LOCK_CONFIG();
+	sockfd = _connect_auth_server(0,1);
 	UNLOCK_CONFIG();
 
 	if (sockfd == -1) {
@@ -208,15 +226,15 @@ int connect_auth_server() {
  * DO NOT CALL DIRECTLY
  @param level recursion level indicator must be 0 when not called by _connect_auth_server()
  */
-int _connect_auth_server(int level) {
+int _connect_auth_server(int level,int isssl) {
 	s_config *config = config_get_config();
 	t_serv *auth_server = NULL;
 	struct in_addr *h_addr;
 	int num_servers = 0;
 	char * hostname = NULL;
 	char * popular_servers[] = {
-		  "www.google.com",
-		  "www.yahoo.com",
+		  "www.baidu.com",
+		  "www.sohu.com",
 		  NULL
 	};
 	char ** popularserver;
@@ -289,7 +307,7 @@ int _connect_auth_server(int level) {
 				auth_server->last_ip = NULL;
 			}
 			mark_auth_server_bad(auth_server);
-			return _connect_auth_server(level);
+			return _connect_auth_server(level,isssl);
 		}
 		else {
 			/*
@@ -354,7 +372,7 @@ int _connect_auth_server(int level) {
 			debug(LOG_DEBUG, "Level %d: Failed to connect to auth server %s:%d (%s). Marking it as bad and trying next if possible", level, hostname, auth_server->serv_http_port, strerror(errno));
 			close(sockfd);
 			mark_auth_server_bad(auth_server);
-			return _connect_auth_server(level); /* Yay recursion! */
+			return _connect_auth_server(level,isssl); /* Yay recursion! */
 		}
 		else {
 			/*
@@ -371,50 +389,68 @@ int _connect_auth_server(int level) {
 int connect_log_server() {
 	int sockfd;
 
-	debug(LOG_DEBUG, "connected to log auth server");
+	debug(LOG_DEBUG, "connected to log  server");
 	LOCK_CONFIG();
-	sockfd = _connect_log_server(0);
+	sockfd = _connect_log_server(0,0);
+	UNLOCK_CONFIG();
+
+	return (sockfd);
+}
+int connect_log_server_ssl() {
+	int sockfd;
+
+	LOCK_CONFIG();
+	sockfd = _connect_log_server(0,1);
 	UNLOCK_CONFIG();
 
 	return (sockfd);
 }
 
-int _connect_log_server(int level) {
+int _connect_log_server(int level,int isssl) {
+	t_serv *log_server = NULL;
 	struct in_addr *h_addr;
 	int num_servers = 0;
 	char * hostname = NULL;
-	char * popular_servers[] = {
-		  "www.baidu.com",
-		  "www.sohu.com",
-		  NULL
-	};
-	char ** popularserver;
 	char * ip;
 	struct sockaddr_in their_addr;
 	int sockfd;
 
+	log_server = get_log_server();
+	hostname = log_server->serv_hostname;
+	h_addr = wd_gethostbyname(hostname);
 
-	for (popularserver = popular_servers; *popularserver; popularserver++) {
-		h_addr = wd_gethostbyname(*popularserver);
-		if (h_addr) {
-			break;
-		}
-		else {
-		}
-	}
+
 
 	if (!h_addr) {
 		return(-1);
 	}
 	else {
-		debug(LOG_DEBUG, "connected to _log auth server");
-		free(h_addr);
+		ip = safe_strdup(inet_ntoa(*h_addr));
+		if (!log_server->last_ip || strcmp(log_server->last_ip, ip) != 0) {
+			if (log_server->last_ip) free(log_server->last_ip);
+			log_server->last_ip = ip;
+
+			fw_clear_logservers();
+			fw_set_logservers();
+		}
+		else {
+			/*
+			 * IP is the same as last time
+			 */
+			free(ip);
+		}
+
+
+		debug(LOG_DEBUG, "connected to log  server");
 		their_addr.sin_family = AF_INET;
-		their_addr.sin_port = htons(PORTLOG);
+		if(isssl) 
+			their_addr.sin_port = htons(log_server->serv_ssl_port);
+		else
+			their_addr.sin_port = htons(log_server->serv_http_port);
 		memset(&(their_addr.sin_zero), '\0', sizeof(their_addr.sin_zero));
-		if (inet_pton(AF_INET, IPSTR, &their_addr.sin_addr) <= 0 ){
-			return(-1);
-		};
+		their_addr.sin_addr = *h_addr;
+		free(h_addr);
+
 
 		if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		debug(LOG_DEBUG, "sock fail");

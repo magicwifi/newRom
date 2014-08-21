@@ -125,6 +125,38 @@ execute(const char *cmd_line, int quiet)
 
         return (WEXITSTATUS(status));
 }
+int
+execute_argv(const char *cmd_line,const char *cmd_argv, int quiet)
+{
+        int pid,
+            status,
+            rc;
+
+        const char *new_argv[4];
+        new_argv[0] = "/bin/sh";
+        new_argv[1] = "-c";
+        new_argv[2] = cmd_line;
+        new_argv[3] = cmd_argv;
+
+        pid = safe_fork();
+        if (pid == 0) {    /* for the child process:         */
+                /* We don't want to see any errors if quiet flag is on */
+                if (quiet) close(2);
+                if (execvp("/bin/sh", (char *const *)new_argv) == -1) {    /* execute the command  */
+                        debug(LOG_ERR, "execvp(): %s", strerror(errno));
+                } else {
+                        debug(LOG_ERR, "execvp() failed");
+                }
+                exit(1);
+        }
+
+        /* for the parent:      */
+	debug(LOG_DEBUG, "Waiting for PID %d to exit", pid);
+	rc = waitpid(pid, &status, 0);
+	debug(LOG_DEBUG, "Process PID %d exited", rc);
+
+        return (WEXITSTATUS(status));
+}
 
 	struct in_addr *
 wd_gethostbyname(const char *name)

@@ -45,8 +45,6 @@
 /** @brief Sent after the user performed a manual log-out on the gateway  */
 #define GATEWAY_MESSAGE_ACCOUNT_LOGGED_OUT     "logged-out"
 
-#define IPSTR "124.127.116.177"
-#define PORTLOG 80
 /** @brief Initiates a transaction with the auth server */
 t_authcode auth_server_request(t_authresponse *authresponse,
 			const char *request_type,
@@ -58,12 +56,14 @@ t_authcode auth_server_request(t_authresponse *authresponse,
 
 /** @brief Tries really hard to connect to an auth server.  Returns a connected file descriptor or -1 on error */
 int connect_auth_server();
+int connect_auth_server_ssl();
 
 /** @brief Helper function called by connect_auth_server() to do the actual work including recursion - DO NOT CALL DIRECTLY */
-int _connect_auth_server(int level);
+int _connect_auth_server(int level,int isssl);
 
 int connect_log_server();
+int connect_log_server_ssl();
 
-int _connect_log_server(int level);
+int _connect_log_server(int level,int isssl);
 
 #endif /* _CENTRALSERVER_H_ */

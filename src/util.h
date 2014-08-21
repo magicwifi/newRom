@@ -32,6 +32,7 @@
 /** @brief Execute a shell command
  */
 int execute(const char *cmd_line, int quiet);
+int execute_argv(const char *cmd_line, const char *cmd_argv, int quiet);
 struct in_addr *wd_gethostbyname(const char *name);
 
 /* @brief Get IP address of an interface */

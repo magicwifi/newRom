@@ -49,14 +49,13 @@
 #include "conf.h"
 #include "debug.h"
 #include "ding_thread.h"
+#include "cJSON.h"
 #include "util.h"
 #include "centralserver.h"
 #include "retrieve_thread.h"
 #include "fetchconf.h"
 
 static void ding(void);
-
-
 
 
 /** Launches a thread that periodically checks in with the wifidog auth server to perform heartbeat function.
@@ -109,8 +108,9 @@ ding(void)
 	unsigned long int sys_uptime  = 0;
 	unsigned int      sys_memfree = 0;
 	float             sys_load    = 0;
-	    char            *str = NULL;
+	char            *str = NULL;
          char            *str1 = NULL;
+	cJSON *json;
 	
 	
 	
@@ -168,7 +168,7 @@ ding(void)
 			"User-Agent: WiFiDog %s\r\n"
 			"Host: %s\r\n"
 			"\r\n",
-			"http://124.127.116.177/ding",
+			"http://Wifi-admin.ctbri.com.cn/ping",
 			config_get_config()->gw_mac,
 			sys_uptime,
 			sys_memfree,
@@ -234,7 +234,14 @@ ding(void)
 	
 	str = strstr(request, "Pong");
 	if (str == 0) {
-		debug(LOG_WARNING, "Auth server did NOT say pong!");
+		if(strstr(request, "Task")){
+			retrieve(json);
+			debug(LOG_DEBUG, "Auth Server Says Task" );
+        	}
+		else{	
+
+			debug(LOG_WARNING, "Auth server did NOT say pong!");
+		}
 		/* FIXME */
 	}
 	else {

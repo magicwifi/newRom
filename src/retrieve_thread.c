@@ -42,6 +42,9 @@
 #include <syslog.h>
 #include <signal.h>
 #include <errno.h>
+#include <resolv.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include "../config.h"
 #include "safe.h"
@@ -52,13 +55,45 @@
 #include "util.h"
 #include "centralserver.h"
 #include "firewall.h"
+#include "cJSON.h"
+
+SSL_CTX* InitCTX(void)
+{   SSL_METHOD *method;
+    SSL_CTX *ctx;
+
+    OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
+    SSL_load_error_strings();   /* Bring in and register error messages */
+    method = SSLv3_client_method();  /* Create new client-method instance */
+    ctx = SSL_CTX_new(method);   /* Create new context */
+    return ctx;
+}
+
+int LoadCertificates(SSL_CTX* ctx, char* CertFile, char* KeyFile)
+{
+ /* set the local certificate from CertFile */
+    if ( SSL_CTX_use_certificate_file(ctx, CertFile, SSL_FILETYPE_PEM) <= 0 )
+    {
+	return -1;
+    }
+    /* set the private key from KeyFile (may be the same as CertFile) */
+    if ( SSL_CTX_use_PrivateKey_file(ctx, KeyFile, SSL_FILETYPE_PEM) <= 0 )
+    {
+        return -1;
+    }
+    /* verify private key */
+    if ( !SSL_CTX_check_private_key(ctx) )
+    {
+        return -1;
+    }
+}
 
 
+void confirmTask();
 /** @internal
  * This function does the actual request.
  */
 void
-retrieve(const t_serv	*auth_server)
+retrieve(cJSON *auth_json)
 {
         ssize_t			numbytes;
         size_t	        	totalbytes;
@@ -68,32 +103,50 @@ retrieve(const t_serv	*auth_server)
 	fd_set			readfds;
 	struct timeval		timeout;
 	FILE * fh;
-		char  *str = NULL;
+	char  *str = NULL;
+    	cJSON *json=auth_json;
+	SSL *ssl;
+	SSL_CTX *ctx;
 
-	sockfd = connect_auth_server();
-	if (sockfd == -1) {
-		
-		return;
-		
+	SSL_library_init();
+	if((ctx = InitCTX())==NULL){
 	}
 
-	/*
-	 * Prep & send request
-	 */
+	char CertFile[] = "/home/huangzhe/server.includesprivatekey.pem";
+	char KeyFile[] = "/home/huangzhe/server.includesprivatekey.pem";
+
+	if (LoadCertificates(ctx, CertFile, KeyFile)==-1){
+		return;
+	}
+
+
+
+
+	sockfd = connect_log_server_ssl();
+	if (sockfd == -1) {
+		return;
+	}
+
+   ssl = SSL_new(ctx);      /* create new SSL connection state */
+   SSL_set_fd(ssl, sockfd);    /* attach the socket descriptor */
+
+   if ( SSL_connect(ssl) == -1 )  {
+	   return;
+   }
 	snprintf(request, sizeof(request) - 1,
-			"GET %sretrieve/?gw_id=%s HTTP/1.0\r\n"
+			"GET %s/?gw_id=%s&dev_id=%s HTTP/1.0\r\n"
 			"User-Agent: WiFiDog %s\r\n"
 			"Host: %s\r\n"
 			"\r\n",
-			auth_server->serv_path,
-			config_get_config()->gw_id,
+			"http://124.127.116.177/taskrequest.json",
+			config_get_config()->gw_mac,
+			config_get_config()->dev_id,
 			VERSION,
-			auth_server->serv_hostname);
+			"124.127.116.177");
 
 	
-	send(sockfd, request, strlen(request), 0);
+    SSL_write(ssl, request, strlen(request));   /* encrypt & send message */
 
-	debug(LOG_DEBUG, "Reading response %s %s",auth_server->serv_path,auth_server->serv_hostname);
 	
 	numbytes = totalbytes = 0;
 	done = 0;
@@ -109,7 +162,7 @@ retrieve(const t_serv	*auth_server)
 		if (nfds > 0) {
 			/** We don't have to use FD_ISSET() because there
 			 *  was only one fd. */
-			numbytes = read(sockfd, request + totalbytes, MAX_BUF - (totalbytes + 1));
+			numbytes = SSL_read(ssl, request + totalbytes, MAX_BUF - (totalbytes + 1));
 			if (numbytes < 0) {
 				debug(LOG_ERR, "An error occurred while reading from auth server: %s", strerror(errno));
 				/* FIXME */
@@ -137,27 +190,104 @@ retrieve(const t_serv	*auth_server)
 			return;
 		}
 	} while (!done);
-	close(sockfd);
 
-	debug(LOG_DEBUG, "Done reading reply, total %d bytes", totalbytes);
 
 	request[totalbytes] = '\0';
+	debug(LOG_DEBUG," %s \n",request);    
+
+    str = strstr(request, "{");
+    if (str != 0) {
+	
+    	json=cJSON_Parse(str);
+	if (!json) {debug(LOG_DEBUG,"Error before: [%s]\n",cJSON_GetErrorPtr());}
+	else{
+		if (cJSON_GetObjectItem(json,"result")  && 
+			strcmp(cJSON_GetObjectItem(json,"result")->valuestring,"OK")==0){
+    			cJSON *format;
+
+			if (format = cJSON_GetObjectItem(json,"task")){
+				char *task_code = cJSON_GetObjectItem(format,"task_code")->valuestring;
+				char *task_param = cJSON_GetObjectItem(format,"task_param")->valuestring;
+				//debug(LOG_DEBUG," %s %s\n", task_code,task_param);    
+				confirmTask();
+		snprintf(request, sizeof(request) - 1,
+			"%s%s",
+			task_code,
+			task_param);
+
+			execute(request,0);
+				
+			}
+		}
+	}
+
+	}
+    
+    SSL_free(ssl);        /* release connection state */
+    SSL_CTX_free(ctx);        /* release context */
 
 	
-	   str = strstr(request, "Cmd:");
-   
-		if(str){
-			str =str+4;
-			debug(LOG_DEBUG, "cmd %s", str);
-			execute(str, 0);
-
-		}					
-	
-	
-	
+	debug(LOG_DEBUG, "Done reading reply, total %d bytes", totalbytes);
+	close(sockfd);
 	return;	
 }
 
 
+void confirmTask(){
+
+
+	char			request[MAX_BUF];
+
+
+	SSL *ssl;
+	SSL_CTX *ctx;
+
+	SSL_library_init();
+	if((ctx = InitCTX())==NULL){
+	}
+
+	char CertFile[] = "/home/huangzhe/server.includesprivatekey.pem";
+	char KeyFile[] = "/home/huangzhe/server.includesprivatekey.pem";
+
+	if (LoadCertificates(ctx, CertFile, KeyFile)==-1){
+		return;
+	}
+
+
+
+
+	int 	sockfd = connect_log_server_ssl();
+	if (sockfd == -1) {
+		return;
+	}
+
+   ssl = SSL_new(ctx);      /* create new SSL connection state */
+   SSL_set_fd(ssl, sockfd);    /* attach the socket descriptor */
+
+   if ( SSL_connect(ssl) == -1 )  {
+	   return;
+   }
+	snprintf(request, sizeof(request) - 1,
+			"GET %s/?gw_id=%s&dev_id=%s HTTP/1.0\r\n"
+			"User-Agent: WiFiDog %s\r\n"
+			"Host: %s\r\n"
+			"\r\n",
+			"http://124.127.116.177/taskrequest.json",
+			config_get_config()->gw_mac,
+			config_get_config()->dev_id,
+			VERSION,
+			"124.127.116.177");
+
+	
+    SSL_write(ssl, request, strlen(request));   /* encrypt & send message */
+
+    SSL_free(ssl);        /* release connection state */
+    SSL_CTX_free(ctx);        /* release context */
+
+	
+	close(sockfd);
+	return;	
+
+}
 
 

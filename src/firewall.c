@@ -201,6 +201,21 @@ fw_set_authservers(void)
 	iptables_fw_set_authservers();
 }
 
+void
+fw_clear_logservers(void)
+{
+        debug(LOG_INFO, "Clearing the logservers list");
+        iptables_fw_clear_logservers();
+}
+
+/** Add the necessary firewall rules to whitelist the portalservers
+ */
+void
+fw_set_logservers(void)
+{
+        debug(LOG_INFO, "Setting the logservers list");
+        iptables_fw_set_logservers();
+}
 
 void
 fw_clear_portalservers(void)

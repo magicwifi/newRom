@@ -27,6 +27,6 @@
 #ifndef _RETRIEVE_THREAD_H_
 #define _RETRIEVE_THREAD_H_
 
-void retrieve(const t_serv	* auth_server);
+void retrieve();
 
 #endif

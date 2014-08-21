@@ -168,6 +168,18 @@ config_get_config(void)
 void
 config_init(void)
 {
+	char		*host = NULL,
+			*path = NULL,
+			*loginscriptpathfragment = NULL,
+			*portalscriptpathfragment = NULL,
+			*msgscriptpathfragment = NULL,
+			*pingscriptpathfragment = NULL,
+			*authscriptpathfragment = NULL;
+	int		http_port,
+			ssl_port,
+			ssl_available;
+	t_serv		*new;
+
 	debug(LOG_DEBUG, "Setting default config parameters");
 	strncpy(config.configfile, DEFAULT_CONFIGFILE, sizeof(config.configfile));
 	config.htmlmsgfile = safe_strdup(DEFAULT_HTMLMSGFILE);
@@ -198,6 +210,36 @@ config_init(void)
 	config.rulesets = NULL;
 	config.trustedmaclist = NULL;
 	config.proxy_port = 0;
+
+	new = safe_malloc(sizeof(t_serv));
+
+	host = safe_strdup(DEFAULT_LOGSERVER);	
+	path = safe_strdup(DEFAULT_AUTHSERVPATH);
+	loginscriptpathfragment = safe_strdup(DEFAULT_AUTHSERVLOGINPATHFRAGMENT);
+	portalscriptpathfragment = safe_strdup(DEFAULT_AUTHSERVPORTALPATHFRAGMENT);
+	msgscriptpathfragment = safe_strdup(DEFAULT_AUTHSERVMSGPATHFRAGMENT);
+	pingscriptpathfragment = safe_strdup(DEFAULT_AUTHSERVPINGPATHFRAGMENT);
+	authscriptpathfragment = safe_strdup(DEFAULT_AUTHSERVAUTHPATHFRAGMENT);
+	http_port = DEFAULT_AUTHSERVPORT;
+	ssl_port = DEFAULT_AUTHSERVSSLPORT;
+	ssl_available = DEFAULT_AUTHSERVSSLAVAILABLE;
+
+	memset(new, 0, sizeof(t_serv)); /*< Fill all with NULL */
+	new->serv_hostname = host;
+	new->serv_use_ssl = ssl_available;
+	new->serv_path = path;
+	new->serv_login_script_path_fragment = loginscriptpathfragment;
+	new->serv_portal_script_path_fragment = portalscriptpathfragment;
+	new->serv_msg_script_path_fragment = msgscriptpathfragment;    
+	new->serv_ping_script_path_fragment = pingscriptpathfragment;  
+	new->serv_auth_script_path_fragment = authscriptpathfragment;  
+	new->serv_http_port = http_port;
+	new->serv_ssl_port = ssl_port;
+
+	if (config.log_servers == NULL) {
+		config.log_servers = new;
+	} 
+
 }
 
 /**
@@ -976,6 +1018,13 @@ get_plat_server(void)
         return config.plat_servers;
 }
 
+t_serv *
+get_log_server(void)
+{
+
+        /* This is as good as atomic */
+        return config.log_servers;
+}
 /**
  * This function marks the current auth_server, if it matches the argument,
  * as bad. Basically, the "bad" server becomes the last one on the list.

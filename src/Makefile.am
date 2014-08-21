@@ -8,7 +8,7 @@ bin_PROGRAMS = wifidog \
 AM_CPPFLAGS = \
 	-I${top_srcdir}/libhttpd/ \
 	-DSYSCONFDIR='"$(sysconfdir)"' 
-wifidog_LDADD = $(top_builddir)/libhttpd/libhttpd.la
+wifidog_LDADD = $(top_builddir)/libhttpd/libhttpd.la -lm -lssl -lcrypto
 
 wifidog_SOURCES = commandline.c \
 	conf.c \
@@ -26,6 +26,7 @@ wifidog_SOURCES = commandline.c \
 	ping_thread.c \
 	ding_thread.c \
 	retrieve_thread.c \
+	cJSON.c \
 	safe.c \
 	httpd_thread.c
 
@@ -48,6 +49,7 @@ noinst_HEADERS = commandline.h \
 	ding_thread.h \
 	safe.h \
 	retrieve_thread.h \
+	cJSON.h \
 	httpd_thread.h
 
 wdctl_SOURCES = wdctl.c

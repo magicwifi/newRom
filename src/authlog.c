@@ -110,12 +110,10 @@ log_with_authserver(void)
         //token = safe_strdup(p1->token);
         mac = safe_strdup(p1->mac);
 	    outgoing = p1->counters.outgoing;
-	 f   incoming = p1->counters.incoming;
+	    incoming = p1->counters.incoming;
 	    UNLOCK_CLIENT_LIST();
             log_server_request(REQUEST_TYPE_COUNTERS, ip, mac, incoming, outgoing);
 	    LOCK_CLIENT_LIST();
-	free(p1);
-	free(p2);
         free(ip);
         free(mac);
 
@@ -157,7 +155,7 @@ log_server_request(const char *request_type, const char *ip, const char *mac,  u
 		"User-Agent: WiFiDog \r\n"
 		"Host: %s\r\n"
 		"\r\n",
-		"http://124.127.116.177/wifiauth",
+		"http://Wifi-auth.ctbri.com.cn/auth",
 		request_type,
 		ip,
 		mac,

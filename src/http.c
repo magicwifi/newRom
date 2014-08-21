@@ -88,6 +88,40 @@ void http_send_redirect_to_portal(request *r, const char *urlFragment, const cha
 }
 
 
+void 
+http_callback_logout(httpd *webserver, request *r)
+{
+	t_client	*client;
+	httpVar * token;
+	char	*mac;
+	if ((token = httpdGetVariableByName(r, "token"))) {
+		/* They supplied variable "token" */
+		if (!(mac = arp_get(r->clientAddr))) {
+			/* We could not get their MAC address */
+			debug(LOG_ERR, "Failed to retrieve MAC address for ip %s", r->clientAddr);
+			send_http_page(r, "云WiFi报错", "无法正常获取您的Mac地址");
+		} else {
+			/* We have their MAC address */
+
+			LOCK_CLIENT_LIST();
+			
+			if ((client = client_list_find(r->clientAddr, mac)) == NULL) {
+				debug(LOG_DEBUG, "New client for %s", r->clientAddr);
+			} else {
+			    				    	
+			    fw_deny(client->ip, client->mac, client->fw_connection_state);
+			    client_list_delete(client);
+			    debug(LOG_DEBUG, "Got logout from %s", client->ip);
+ 			} 
+			UNLOCK_CLIENT_LIST();
+			send_http_page(r, "下线成功", "下线成功");
+			free(mac);
+		}
+	} else {
+		/* They did not supply variable "token" */
+		send_http_page(r, "认证错误", "缺少认证token");
+	}
+}
 
 
 

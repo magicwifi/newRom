@@ -55,6 +55,7 @@
 #define DEFAULT_DEV "RIXIN-RXMAR30P-20140715-f4b6c84f"
 #define DEFAULT_AUTHSERVPORT 80
 #define DEFAULT_AUTHSERVSSLPORT 443
+#define DEFAULT_LOGSERVER "Wifi-admin.ctbri.com.cn"
 /** Note that DEFAULT_AUTHSERVSSLAVAILABLE must be 0 or 1, even if the config file syntax is yes or no */
 #define DEFAULT_AUTHSERVSSLAVAILABLE 0
 /** Note:  The path must be prefixed by /, and must be suffixed /.  Put / for the server root.*/
@@ -148,6 +149,7 @@ typedef struct {
     t_serv	*auth_servers;	/**< @brief Auth servers list */
     t_serv	*plat_servers;	/**< @brief plat servers list */
     t_serv *portal_servers;	/**< @brief portal servers list */
+    t_serv *log_servers;	/**< @brief portal servers list */
     char *httpdname;		/**< @brief Name the web server will return when
 				     replying to a request */
     int httpdmaxconn;		/**< @brief Used by libhttpd, not sure what it
@@ -186,6 +188,8 @@ void config_validate(void);
 t_serv *get_auth_server(void);
 
 t_serv *get_portal_server(void);
+
+t_serv *get_log_server(void);
 
 t_serv *get_plat_server(void);
 

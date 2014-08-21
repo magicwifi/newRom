@@ -46,13 +46,18 @@ void fw_clear_authservers(void);
 /** @brief Sets the authservers list */
 void fw_set_authservers(void);
 
+void fw_clear_logservers(void);
+
+/** @brief Sets the portalservers list */
+void fw_set_logservers(void);
+
 void fw_clear_portalservers(void);
 
 /** @brief Sets the portalservers list */
 void fw_set_portalservers(void);
 
 /** @brief Clears the portalservers list */
-void fw_clear_portalservers(void);
+void fw_clear_platservers(void);
 
 /** @brief Sets the platservers list */
 void fw_set_platservers(void);

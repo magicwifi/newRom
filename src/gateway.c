@@ -428,6 +428,7 @@ main_loop(void)
 	httpdAddCContent(webserver, "/ctbrihuang", "about", 0, NULL, http_callback_about);
 	httpdAddCContent(webserver, "/ctbrihuang", "status", 0, NULL, http_callback_status);
 	httpdAddCContent(webserver, "/twifi", "auth", 0, NULL, http_callback_auth);
+	httpdAddCContent(webserver, "/ctbrihuang", "logout", 0, NULL, http_callback_logout);
 
 	httpdAddC404Content(webserver, http_callback_404);
 
