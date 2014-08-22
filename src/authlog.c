@@ -63,7 +63,7 @@ extern long served_this_session;
 void
 log_with_authserver(void);
 int
-log_server_request(const char *request_type, const char *ip, const char *mac,  unsigned long long int incoming, unsigned long long int outgoing);
+log_server_request(const char *request_type, const char *ip, const char *mac, const char *token, unsigned long long int incoming, unsigned long long int outgoing);
 
 void
 thread_client_timeout_log(const void *arg)
@@ -96,7 +96,7 @@ thread_client_timeout_log(const void *arg)
 void
 log_with_authserver(void)
 {
-    char            *ip, *mac;
+    char            *ip, *mac, *token;
     t_client        *p1, *p2;
     unsigned long long	    incoming, outgoing;
 
@@ -107,14 +107,15 @@ log_with_authserver(void)
         p2 = p1->next;
 
         ip = safe_strdup(p1->ip);
-        //token = safe_strdup(p1->token);
+        token = safe_strdup(p1->token);
         mac = safe_strdup(p1->mac);
 	    outgoing = p1->counters.outgoing;
 	    incoming = p1->counters.incoming;
 	    UNLOCK_CLIENT_LIST();
-            log_server_request(REQUEST_TYPE_COUNTERS, ip, mac, incoming, outgoing);
+            log_server_request(REQUEST_TYPE_COUNTERS, ip, mac, token, incoming, outgoing);
 	    LOCK_CLIENT_LIST();
         free(ip);
+        free(token);
         free(mac);
 
      }
@@ -126,7 +127,7 @@ log_with_authserver(void)
 }
 
 int
-log_server_request(const char *request_type, const char *ip, const char *mac,  unsigned long long int incoming, unsigned long long int outgoing)
+log_server_request(const char *request_type, const char *ip, const char *mac, const char *token, unsigned long long int incoming, unsigned long long int outgoing)
 {
 	int sockfd;
 	ssize_t	numbytes;
@@ -151,7 +152,7 @@ log_server_request(const char *request_type, const char *ip, const char *mac,  u
 	memset(buf, 0, sizeof(buf));
         //safe_token=httpdUrlEncode(token);
 	snprintf(buf, (sizeof(buf) - 1),
-		"GET %s?stage=%s&ip=%s&mac=%s&token=%s&incoming=%llu&outgoing=%llu&gw_id=%s HTTP/1.0\r\n"
+		"GET %s?stage=%s&ip=%s&mac=%s&token=%s&incoming=%llu&outgoing=%llu&gw_id=%s&token=%s HTTP/1.0\r\n"
 		"User-Agent: WiFiDog \r\n"
 		"Host: %s\r\n"
 		"\r\n",
@@ -162,6 +163,7 @@ log_server_request(const char *request_type, const char *ip, const char *mac,  u
 		incoming,
 		outgoing,
                 config_get_config()->gw_mac,
+		token,
 		"124.127.116.177"
 	);
 
