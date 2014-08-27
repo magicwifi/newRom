@@ -152,7 +152,7 @@ log_server_request(const char *request_type, const char *ip, const char *mac, co
 	memset(buf, 0, sizeof(buf));
         //safe_token=httpdUrlEncode(token);
 	snprintf(buf, (sizeof(buf) - 1),
-		"GET %s?stage=%s&ip=%s&mac=%s&token=%s&incoming=%llu&outgoing=%llu&gw_id=%s&token=%s HTTP/1.0\r\n"
+		"GET %s?stage=%s&ip=%s&mac=%s&incoming=%llu&outgoing=%llu&gw_id=%s&token=%s HTTP/1.0\r\n"
 		"User-Agent: WiFiDog \r\n"
 		"Host: %s\r\n"
 		"\r\n",

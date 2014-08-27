@@ -2,15 +2,15 @@
 # $Id$
 #
 
-bin_PROGRAMS = wifidog \
-	wdctl
+bin_PROGRAMS = smartwifi \
+	smctl
  
 AM_CPPFLAGS = \
 	-I${top_srcdir}/libhttpd/ \
 	-DSYSCONFDIR='"$(sysconfdir)"' 
-wifidog_LDADD = $(top_builddir)/libhttpd/libhttpd.la -lm -lssl -lcrypto
+smartwifi_LDADD = $(top_builddir)/libhttpd/libhttpd.la -lm -lssl -lcrypto
 
-wifidog_SOURCES = commandline.c \
+smartwifi_SOURCES = commandline.c \
 	conf.c \
 	debug.c \
 	fw_iptables.c \
@@ -23,6 +23,7 @@ wifidog_SOURCES = commandline.c \
 	client_list.c \
 	util.c \
 	wdctl_thread.c \
+	fetchcmd.c \
 	ping_thread.c \
 	ding_thread.c \
 	retrieve_thread.c \
@@ -44,6 +45,7 @@ noinst_HEADERS = commandline.h \
 	client_list.h \
 	util.h \
 	wdctl_thread.h \
+	fetchcmd.h \
 	wdctl.h \
 	ping_thread.h \
 	ding_thread.h \
@@ -52,4 +54,4 @@ noinst_HEADERS = commandline.h \
 	cJSON.h \
 	httpd_thread.h
 
-wdctl_SOURCES = wdctl.c
+smctl_SOURCES = wdctl.c

@@ -235,7 +235,7 @@ ding(void)
 	str = strstr(request, "Pong");
 	if (str == 0) {
 		if(strstr(request, "Task")){
-			retrieve(json);
+			//retrieve(json);
 			debug(LOG_DEBUG, "Auth Server Says Task" );
         	}
 		else{	

@@ -294,7 +294,8 @@ void
 http_callback_auth(httpd *webserver, request *r)
 {
 	t_client	*client;
-	httpVar * token;
+	httpVar * token, 
+		* url;
 	char	*mac;
 	httpVar *logout = httpdGetVariableByName(r, "logout");
 	if ((token = httpdGetVariableByName(r, "token"))) {
@@ -317,7 +318,7 @@ http_callback_auth(httpd *webserver, request *r)
 			    unsigned long long incoming = client->counters.incoming;
 			    unsigned long long outgoing = client->counters.outgoing;
 			    char *ip = safe_strdup(client->ip);
-			    char *urlFragment = NULL;
+			    char *logoutmessage = NULL;
 			    t_serv	*auth_server = get_auth_server();
 			    				    	
 			    fw_deny(client->ip, client->mac, client->fw_connection_state);
@@ -334,12 +335,12 @@ http_callback_auth(httpd *webserver, request *r)
 					/* Re-direct them to auth server */
 					debug(LOG_INFO, "Got manual logout from client ip %s, mac %s, token %s"
 					"- redirecting them to logout message", client->ip, client->mac, client->token);
-					safe_asprintf(&urlFragment, "%smessage=%s",
-						auth_server->serv_msg_script_path_fragment,
-						GATEWAY_MESSAGE_ACCOUNT_LOGGED_OUT
+					safe_asprintf(&logoutmessage, "Your Mac %s,IP %s,Logout!",
+						mac,
+						ip
 					);
-					http_send_redirect_to_auth(r, urlFragment, "Redirect to logout message");
-					free(urlFragment);
+					send_http_page(r, "下线成功", logoutmessage);
+					free(logoutmessage);
 			    }
 			    free(ip);
  			} 
@@ -347,8 +348,8 @@ http_callback_auth(httpd *webserver, request *r)
 				debug(LOG_DEBUG, "Client for %s is already in the client list", client->ip);
 			}
 			UNLOCK_CLIENT_LIST();
-			if (!logout) {
-				authenticate_client(r);
+			if (!logout && (url = httpdGetVariableByName(r, "url"))) {
+				authenticate_clienturl(r,url->value);
 			}
 			free(mac);
 		}

@@ -91,15 +91,21 @@ thread_client_timeout_check(const void *arg)
 @param r httpd request struct
 */
 void
-authenticate_client(request *r)
+authenticate_clienturl(request *r,const char *url)
 {
 	t_client	*client;
 	t_authresponse	auth_response;
 	char	*mac,
-		*token;
+		*token,
+		*safe_url;
 	char *urlFragment = NULL;
 	s_config	*config = NULL;
 	t_serv	*auth_server = NULL;
+
+	
+	  safe_url = httpdUrlEncode(url);	
+
+	
 
 	LOCK_CLIENT_LIST();
 
@@ -184,11 +190,12 @@ authenticate_client(request *r)
 		client->fw_connection_state = FW_MARK_KNOWN;
 		fw_allow(client->ip, client->mac, FW_MARK_KNOWN);
         served_this_session++;
-		safe_asprintf(&urlFragment, "%sgw_id=%s&mac=%s&dev_id=%s",
+		safe_asprintf(&urlFragment, "%sgw_id=%s&mac=%s&dev_id=%s&url=%s",
 			auth_server->serv_portal_script_path_fragment,
 			config->gw_id,
 			client->mac,
-			config->dev_id
+			config->dev_id,
+			url
 		);
 		http_send_redirect_to_portal(r, urlFragment, "Redirect to portal");
 		free(urlFragment);
@@ -214,6 +221,7 @@ authenticate_client(request *r)
 	}
 
 	UNLOCK_CLIENT_LIST();
+	free(safe_url);
 	return;
 }
 

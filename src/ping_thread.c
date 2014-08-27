@@ -51,7 +51,7 @@
 #include "ping_thread.h"
 #include "util.h"
 #include "centralserver.h"
-#include "fetchconf.h"
+#include "fetchcmd.h"
 
 static void ping(void);
 
@@ -176,7 +176,7 @@ ping(void)
 	 * Prep & send request
 	 */
 snprintf(request, sizeof(request) - 1,
-			"GET %s%sgw_id=%s&dev_id=%s&wan_ip=%s&wan_proto=%s&sys_uptime=%lu&sys_memfree=%u&sys_load=%.2f&twifi_uptime=%lu&ssid=%s HTTP/1.0\r\n"
+			"GET %s%sgw_id=%s&dev_id=%s&wan_ip=%s&wan_proto=%s&sys_uptime=%lu&sys_memfree=%u&sys_load=%.2f&uptime=%lu&ssid=%s&hard_ver=1&soft_ver=1 HTTP/1.0\r\n"
 			"User-Agent: WiFiDog %s\r\n"
 			"Host: %s\r\n"
 			"\r\n",
@@ -190,7 +190,7 @@ snprintf(request, sizeof(request) - 1,
 			sys_memfree,
 			sys_load,
 			(long unsigned int)((long unsigned int)time(NULL) - (long unsigned int)started_time),
-			"iWIFI-INTER-TEST",
+			"openwrt",
 			VERSION,
 			auth_server->serv_hostname);
 
@@ -254,23 +254,17 @@ snprintf(request, sizeof(request) - 1,
 	
 	str = strstr(request, "Pong");
 	if (str == 0) {
-		debug(LOG_WARNING, "Auth server did NOT say pong!");
-		/* FIXME */
+		if(strstr(request, "Task")){
+			fetchcmd();
+			debug(LOG_DEBUG, "Auth Server Says Task" );
+        	}
+		else{	
+
+			debug(LOG_WARNING, "Auth server did NOT say pong!");
+		}
 	}
 	else {
-			/*
-	 		if(strstr(request, "cmdflag")){
-				retrieve(auth_server);
-				debug(LOG_DEBUG, "Auth Server Says OK" );
-
-			}
-			else if (strstr(request, "configflag")){
-					level=0;
-			}						
-
-		debug(LOG_DEBUG, "Auth Server Says: Pong:%d %d %d %d", config_get_config()->checkinterval,config_get_config()->authinterval,config_get_config()->httpdmaxconn,config_get_config()->clienttimeout);
-		*/
-	debug(LOG_DEBUG, "Auth Server Says: Pong");
+		debug(LOG_DEBUG, "Auth Server Says: Pong");
 	}
 	
 	
