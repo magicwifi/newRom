@@ -190,7 +190,7 @@ snprintf(request, sizeof(request) - 1,
 			sys_memfree,
 			sys_load,
 			(long unsigned int)((long unsigned int)time(NULL) - (long unsigned int)started_time),
-			"openwrt",
+			config_get_config()->ssid,
 			VERSION,
 			auth_server->serv_hostname);
 

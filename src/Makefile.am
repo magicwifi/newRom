@@ -8,7 +8,7 @@ bin_PROGRAMS = smartwifi \
 AM_CPPFLAGS = \
 	-I${top_srcdir}/libhttpd/ \
 	-DSYSCONFDIR='"$(sysconfdir)"' 
-smartwifi_LDADD = $(top_builddir)/libhttpd/libhttpd.la -lm -lssl -lcrypto
+smartwifi_LDADD = $(top_builddir)/libhttpd/libhttpd.la -lm -lssl -lcrypto -luci
 
 smartwifi_SOURCES = commandline.c \
 	conf.c \

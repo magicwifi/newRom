@@ -41,6 +41,8 @@
 #include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <uci.h>  
+#include <unistd.h>  
 
 #if defined(__NetBSD__)
 #include <sys/socket.h>
@@ -87,6 +89,98 @@ static time_t last_auth_online_time = 0;
 static time_t last_auth_offline_time = 0;
 
 long served_this_session = 0;
+
+
+char * ssidRead() {
+
+  struct uci_context *c;
+  struct uci_ptr p;
+
+  char *ssid = safe_strdup ("wireless.@wifi-iface[0].ssid"); 
+  c = uci_alloc_context();
+  if (uci_lookup_ptr (c, &p, ssid, true) != UCI_OK)
+    {
+      uci_perror (c, "XXX");
+      return 1;
+    }
+
+  char *str = strdup(p.o->v.string);
+  uci_free_context (c);
+  free(ssid);
+  return str; 
+}
+
+char * hostnameRead() {
+
+  struct uci_context *c;
+  struct uci_ptr p;
+
+  char *ssid = strdup ("system.@system[0].hostname"); 
+  c = uci_alloc_context();
+  if (uci_lookup_ptr (c, &p, ssid, true) != UCI_OK)
+    {
+      uci_perror (c, "XXX");
+      return 1;
+    }
+
+  char *str = safe_strdup(p.o->v.string);
+  uci_free_context (c);
+  free(ssid);
+  return str; 
+}
+
+
+
+int ssidEdit(const char *option1) {
+
+  struct uci_context *c;
+  struct uci_ptr p;
+
+  int length1= strlen("wireless.@wifi-iface[0].ssid=")+strlen(option1)+1;
+  char *ssid = safe_malloc(length1);
+  strcpy(ssid,"wireless.@wifi-iface[0].ssid="); 
+  strcat(ssid,option1); 
+
+
+  c = uci_alloc_context();
+  if (uci_lookup_ptr (c, &p, ssid, true) != UCI_OK)
+    {
+      uci_perror (c, "XXX");
+      return 1;
+    }
+
+  uci_set(c,&p);   
+  uci_save(c, p.p);
+  uci_commit(c, &p.p, false);
+  uci_free_context (c);
+ free(ssid);
+  return(0); 
+}
+
+int hostnameEdit(const char *option2) {
+
+  struct uci_context *c;
+  struct uci_ptr p;
+
+  int length2= strlen("system.@system[0].hostname=")+strlen(option2)+1;
+  char *hostname = safe_malloc(length2);
+  strcpy(hostname,"system.@system[0].hostname="); 
+  strcat(hostname,option2); 
+
+  c = uci_alloc_context();
+  if (uci_lookup_ptr (c, &p, hostname, true) != UCI_OK)
+    {
+      uci_perror (c, "XXX");
+      return 1;
+    }
+
+  uci_set(c,&p);   
+  uci_save(c, p.p);
+  uci_commit(c, &p.p, false);
+  uci_free_context (c);
+ free(hostname);
+  return(0); 
+}
 
 /** Fork a child and execute a shell command, the parent
  * process waits for the child to return and returns the child's exit()

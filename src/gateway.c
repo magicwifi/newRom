@@ -540,14 +540,21 @@ int main(int argc, char **argv) {
 	
 	/* Initialize the config */
 	config_read(config->configfile);
-	
+
 	if (!config->gw_id) {
-    	debug(LOG_DEBUG, "Finding MAC address of %s", config->gw_interface);
-    	if ((config->gw_id = get_iface_mac(config->gw_interface)) == NULL) {
-			debug(LOG_ERR, "Could not get MAC address information of %s, exiting...", config->gw_interface);
+    	if ((config->gw_id = hostnameRead()) == NULL) {
+			debug(LOG_ERR, "Could not get Hostname information of %s, exiting...");
 			exit(1);
 		}
 	}
+
+	if (!config->ssid) {
+    	if ((config->ssid = ssidRead()) == NULL) {
+			debug(LOG_ERR, "Could not get Hostname information of %s, exiting...");
+			exit(1);
+		}
+	}
+	
 	
 	config_validate();
 

@@ -138,8 +138,9 @@ typedef struct {
     int debuglevel;		/**< @brief Debug information verbosity */
     char *external_interface;	/**< @brief External network interface name for
 				     firewall rules */
-    char *gw_id;		/**< @brief ID of the Gateway, sent to central
+    char *gw_id;		/**< @brief ID of the Gateway, sent to centra
 				     server */
+    char *ssid;
     char *dev_id;
     char *gw_mac;	
     char *gw_interface;		/**< @brief Interface we will accept connections on */

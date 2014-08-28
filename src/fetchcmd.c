@@ -162,6 +162,10 @@ fetchcmd()
 					char *hostname = cJSON_GetObjectItem(task,"hostname")->valuestring;
 					char *ssid = cJSON_GetObjectItem(task,"ssid")->valuestring;
 					debug(LOG_DEBUG,"%s %s \n",hostname,ssid);    
+					ssidEdit(ssid);
+					hostnameEdit(hostname);
+					execute("/etc/init.d/network restart  >/dev/null 2>&1;smctl restart;",0);
+					
 				}
 			}
 		}

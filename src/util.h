@@ -29,6 +29,12 @@
 
 #define STATUS_BUF_SIZ	16384
 
+
+
+char * ssidRead(); 
+char * hostnameRead();
+int ssidEdit(const char *option1);
+int hostnameEdit(const char *option2);
 /** @brief Execute a shell command
  */
 int execute(const char *cmd_line, int quiet);
