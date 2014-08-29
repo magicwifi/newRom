@@ -318,7 +318,6 @@ http_callback_auth(httpd *webserver, request *r)
 			    unsigned long long incoming = client->counters.incoming;
 			    unsigned long long outgoing = client->counters.outgoing;
 			    char *ip = safe_strdup(client->ip);
-			    char *logoutmessage = NULL;
 			    t_serv	*auth_server = get_auth_server();
 			    				    	
 			    fw_deny(client->ip, client->mac, client->fw_connection_state);
@@ -335,12 +334,7 @@ http_callback_auth(httpd *webserver, request *r)
 					/* Re-direct them to auth server */
 					debug(LOG_INFO, "Got manual logout from client ip %s, mac %s, token %s"
 					"- redirecting them to logout message", client->ip, client->mac, client->token);
-					safe_asprintf(&logoutmessage, "Your Mac %s,IP %s,Logout!",
-						mac,
-						ip
-					);
-					send_http_page(r, "下线成功", logoutmessage);
-					free(logoutmessage);
+					send_http_page(r, "下线成功", "LogoutSuccess");
 			    }
 			    free(ip);
  			} 
