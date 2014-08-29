@@ -155,8 +155,13 @@ fetchcmd()
 					execute("reboot",0);
 					debug(LOG_DEBUG," reboot \n");    
 				}else if(task_code == 2002){
-					execute("smctl restart",0);
+					//execute("smctl restart",0);
 					debug(LOG_DEBUG," smctl restart \n");    
+					fw_destroy();
+					if (!fw_init()) {
+						debug(LOG_ERR, "FATAL: Failed to initialize firewall");
+						exit(1);
+					}
 				}else if(task_code ==2003){
 					cJSON * task = cJSON_GetObjectItem(format,"task_params");
 					char *hostname = cJSON_GetObjectItem(task,"hostname")->valuestring;
