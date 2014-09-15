@@ -312,7 +312,7 @@ http_callback_auth(httpd *webserver, request *r)
 			if ((client = client_list_find(r->clientAddr, mac)) == NULL) {
 				debug(LOG_DEBUG, "New client for %s", r->clientAddr);
 				client_list_append(r->clientAddr, mac, token->value);
-			} else if (logout) {
+			} else if (logout&&client) {
 			    t_authresponse  authresponse;
 			    s_config *config = config_get_config();
 			    unsigned long long incoming = client->counters.incoming;
@@ -321,8 +321,9 @@ http_callback_auth(httpd *webserver, request *r)
 			    t_serv	*auth_server = get_auth_server();
 			    				    	
 			    fw_deny(client->ip, client->mac, client->fw_connection_state);
-			    client_list_delete(client);
 			    debug(LOG_DEBUG, "Got logout from %s", client->ip);
+			    debug(LOG_INFO, "Got manual logout from client ip %s, mac %s, token %s"
+					"- redirecting them to logout message", ip, mac, client->mac);
 			    
 			    /* Advertise the logout if we have an auth server */
 			    if (config->auth_servers != NULL) {
@@ -336,6 +337,7 @@ http_callback_auth(httpd *webserver, request *r)
 					"- redirecting them to logout message", client->ip, client->mac, client->token);
 					send_http_page(r, "下线成功", "LogoutSuccess");
 			    }
+			    client_list_delete(client);
 			    free(ip);
  			} 
  			else {

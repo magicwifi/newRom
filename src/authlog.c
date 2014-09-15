@@ -156,7 +156,7 @@ log_server_request(const char *request_type, const char *ip, const char *mac, co
 		"User-Agent: WiFiDog \r\n"
 		"Host: %s\r\n"
 		"\r\n",
-		"http://Wifi-auth.ctbri.com.cn/auth",
+		"http://Wifi-admin.ctbri.com.cn/auth",
 		request_type,
 		ip,
 		mac,

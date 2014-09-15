@@ -203,7 +203,7 @@ int 	sockfd = connect_auth_server();
 	}
 
 	snprintf(request, sizeof(request) - 1,
-			"GET %s?dev_id=%s&task_id=%s&result=%s&message= HTTP/1.0\r\n"
+			"GET %s?dev_id=%s&task_id=%s&result=%s&message=12345678 HTTP/1.0\r\n"
 			"User-Agent: WiFiDog %s\r\n"
 			"Host: %s\r\n"
 			"\r\n",
